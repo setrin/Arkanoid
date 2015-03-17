@@ -3,6 +3,9 @@
 /*global document */
 /*global console */
 
+var levels = ["00000000000000440000", "00002200000002332000002344320000023320000000220000", "00000000000000000000333333333322222222221111111111"];
+
+
 /**
  * Collision detect function
  * @param integer obj1Xpos, obj1Ypos, obj1Width, obj1Height, obj2Xpos, obj2Ypos, obj2Width, obj2Height
@@ -34,6 +37,8 @@ function Collision (obj1X, obj1Y, obj1W, obj1H, obj2X, obj2Y, obj2W, obj2H) {
  * @param object canvas
  */
 function Cube (posX, posY, health, canvas) {
+    var scope = this,
+        drawing = new Image();
     this.width = 40;
     this.height = 20;
     this.posX = posX;
@@ -41,15 +46,14 @@ function Cube (posX, posY, health, canvas) {
     this.health = health;
     this.fullHealth = health;
     this.canvas = canvas;
-    var scope = this;
 
     /**
      * Render to canvas method
      * @return void
      */
     this.render = function() {
-        var drawing = new Image();
-        drawing.src = "images/lives_" + this.fullHealth + "_live_" + this.health + ".png";
+        if (scope.fullHealth > 3) {drawing.src = "images/stone.png";}
+        else {drawing.src = "images/lives_" + this.fullHealth + "_live_" + this.health + ".png";}
         scope.canvas.drawImage(drawing, scope.posX, scope.posY);
     };
 
@@ -58,7 +62,7 @@ function Cube (posX, posY, health, canvas) {
      * @return boolean
      */
     this.takeDamage = function() {
-        if(this.health <= 1) {
+        if(this.health === 1) {
             return true;
         } else {
             this.health--;
@@ -70,14 +74,16 @@ function Cube (posX, posY, health, canvas) {
 /**
  * World class
  * @param object canvas
+ * @param integer level
  */
-function World (canvas) {
+function World (canvas, level) {
     var scope = this;
     this.canvas = canvas;
     this.worldWidth = 400,
     this.worldHeight = 400;
     this.score = 0;
     this.lifes = 3;
+    this.level = level;
     this.gameOver =  false;
     this.pause = false;
     this.holdBall = true;
@@ -88,6 +94,7 @@ function World (canvas) {
      * Player Object
      */
     this.player = new function() {
+        var drawing = new Image();
         this.size = 60;
         this.height = 10;
         this.posX = 170;
@@ -98,7 +105,6 @@ function World (canvas) {
          * @return void
          */
         this.render = function() {
-            var drawing = new Image();
             drawing.src = "images/player.png";
             scope.canvas.drawImage(drawing, this.posX, this.posY);
         };
@@ -108,11 +114,12 @@ function World (canvas) {
      * Ball Object
      */
     this.ball = new function() {
+        var drawing = new Image();
         this.size = 20;
         this.radius = this.size/2;
         this.posX = scope.player.posX + scope.player.size/2;
         this.posY = scope.player.posY - this.size;
-        this.speedX = -2; //-4
+        this.speedX = 0; //-2
         this.speedY = -4; //-2
 
         /**
@@ -136,7 +143,6 @@ function World (canvas) {
          * @return void
          */
         this.render = function() {
-            var drawing = new Image();
             drawing.src = "images/ball.png";
             scope.canvas.drawImage(drawing, this.posX, this.posY);
         };
@@ -166,13 +172,15 @@ function World (canvas) {
             if(scope.ball.posY <= scope.lowestCubePos) {
                 var i, len = scope.cubesCollection.length;
                 for ( i = 0; i < len; i++) {
-                    var side = Collision(scope.cubesCollection[i].posX, scope.cubesCollection[i].posY, scope.cubesCollection[i].width, scope.cubesCollection[i].height, this.posX, this.posY, this.size, this.size);
+                    var side = Collision(scope.cubesCollection[i].posX, scope.cubesCollection[i].posY, scope.cubesCollection[i].width, scope.cubesCollection[i].height, this.posX, (this.posY + this.speedY), this.size, this.size);
                     if (typeof side == 'string') {
                         if (side === 't' || side === 'b') {this.speedY *= -1;} 
                         else if (side === 'r' || side === 'l') {this.speedX *= -1;}
                         scope.score += 30;
                         scope.setScoreLifes();
+                        console.log("collision");
                         if (scope.cubesCollection[i].takeDamage()) {
+                            console.log("destroy");
                             scope.destroyCube(i);
                             len = scope.cubesCollection.length;
                         }
@@ -233,6 +241,7 @@ function World (canvas) {
         var i, len = scope.cubesCollection.length;
         for ( i = 0; i < len; i++) {
             scope.cubesCollection[i].render();
+            scope.cubesCollection[i].timerTakenDmg = false;
         }
     };
 
@@ -332,8 +341,28 @@ function World (canvas) {
         scope.gameOver = false;
         scope.pause = false;
         scope.holdBall = true;
-        scope.ball.speedX = -2;
+        scope.ball.speedX = 0; //-2
         scope.ball.speedY = -4;
+    };
+
+    this.loadLevel = function() {
+        var i, 
+            level = scope.level - 1, 
+            len = levels[level].length, 
+            x = 0, 
+            y = 40;
+
+        for (i = 0; i < len; i++) {
+            if(levels[level][i] > 0) {
+                scope.cubesCollection.push(new Cube(x, y, levels[level][i], scope.canvas));
+            }
+            if (x + 40 >= scope.worldWidth) {
+                x = 0;
+                y += 20;
+            } else {
+                x += 40;
+            }
+        }
     };
 
     /**
@@ -341,7 +370,7 @@ function World (canvas) {
      * @return void
      */
     this.init = function () {
-        level1(scope);
+        scope.loadLevel();
         scope.setDefaults();
         scope.renderWorld();
         scope.timer();
@@ -360,53 +389,7 @@ window.onload = function () {
     var canvas = document.getElementById("myCanvas"),
         ctx = canvas.getContext("2d");
     ctx.fillStyle = "#000";
-    
-    var world = new World(ctx);
+
+    var world = new World(ctx, 1);
     world.init();
-};
-
-
-
-
-
-
-
-
-
-
-
-
-var level1 = function (world) {
-    world.cubesCollection.push(new Cube(0, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(40, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(80, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(120, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(160, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(200, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(240, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(280, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(320, 40, 3, world.canvas));
-    world.cubesCollection.push(new Cube(360, 40, 3, world.canvas)); 
-
-    world.cubesCollection.push(new Cube(0, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(40, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(80, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(120, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(160, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(200, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(240, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(280, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(320, 60, 2, world.canvas));
-    world.cubesCollection.push(new Cube(360, 60, 2, world.canvas));
-
-    world.cubesCollection.push(new Cube(0, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(40, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(80, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(120, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(160, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(200, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(240, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(280, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(320, 80, 1, world.canvas));
-    world.cubesCollection.push(new Cube(360, 80, 1, world.canvas));  
 };
