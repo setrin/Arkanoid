@@ -4,16 +4,21 @@
         <title>Arcanoid!!</title>
         <link type="text/css" rel="stylesheet" href="style.css">
         <script src="functions.js" type="text/javascript"></script>
+        <meta content='width=device-width, initial-scale=0.8, maximum-scale=1.0, user-scalable=0' name='viewport' />
     </head>
     
     <body>
-        <canvas width="400" height="400" id="myCanvas"></canvas>
-        <div class="informations">
-        	<span class='strong'>Score: <strong id="score">0</strong></span>
-        	<span class='strong'>Lifes: <strong id="lifes">3</strong></span>
-        	<span>Move mouse to controll pad</span>
-        	<span>Left mouse click to shot ball</span>
-        	<span>P to pause</span>
+        <div class="canCon">
+            <canvas width='400' height='400' id="myCanvas" unselectable="on"></canvas>
+            <div class="informations">
+            	<span class='strong'>Score: <strong id="score">0</strong></span>
+            	<span class='strong'>Lifes: <strong id="lifes">3</strong></span>
+            </div>
         </div>
+        <!--div class="instructions">
+            <span>Move mouse to controll pad</span>
+            <span>Left mouse click to shot ball</span>
+            <span>P to pause</span>
+        </div-->
     </body>
 </html>

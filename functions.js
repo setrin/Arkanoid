@@ -3,7 +3,7 @@
 /*global document */
 /*global console */
 
-var levels = ["00000000000000440000", "00002200000002332000002344320000023320000000220000", "00000000000000000000333333333322222222221111111111"];
+var levels = ["00002200000002332000002333320000023320000000220000", "00000000000000000000333333333322222222221111111111"];
 
 
 /**
@@ -36,11 +36,12 @@ function Collision (obj1X, obj1Y, obj1W, obj1H, obj2X, obj2Y, obj2W, obj2H) {
  * @param integer positionX, positionY, health
  * @param object canvas
  */
-function Cube (posX, posY, health, canvas) {
+function Cube (posX, posY, health, canvas, scale) {
     var scope = this,
         drawing = new Image();
-    this.width = 40;
-    this.height = 20;
+    this.scale = scale;
+    this.width = Math.round(40*this.scale);
+    this.height = Math.round(20*this.scale);
     this.posX = posX;
     this.posY = posY;
     this.health = health;
@@ -54,7 +55,8 @@ function Cube (posX, posY, health, canvas) {
     this.render = function() {
         if (scope.fullHealth > 3) {drawing.src = "images/stone.png";}
         else {drawing.src = "images/lives_" + this.fullHealth + "_live_" + this.health + ".png";}
-        scope.canvas.drawImage(drawing, scope.posX, scope.posY);
+        //scope.canvas.drawImage(drawing, scope.posX, scope.posY);
+        scope.canvas.drawImage(drawing, 0, 0, drawing.width, drawing.height, scope.posX, scope.posY, scope.width, scope.height);
     };
 
     /**
@@ -62,7 +64,7 @@ function Cube (posX, posY, health, canvas) {
      * @return boolean
      */
     this.takeDamage = function() {
-        if(this.health === 1) {
+        if(this.health <= 1) {
             return true;
         } else {
             this.health--;
@@ -79,8 +81,8 @@ function Cube (posX, posY, health, canvas) {
 function World (canvas, level) {
     var scope = this;
     this.canvas = canvas;
-    this.worldWidth = 400,
-    this.worldHeight = 400;
+    this.worldWidth = document.getElementById("myCanvas").width,
+    this.worldHeight = document.getElementById("myCanvas").height;
     this.score = 0;
     this.lifes = 3;
     this.level = level;
@@ -89,15 +91,16 @@ function World (canvas, level) {
     this.holdBall = true;
     this.cubesCollection = [];
     this.lowestCubePos = 0;
+    this.scale = this.worldWidth / 400;
 
     /**
      * Player Object
      */
     this.player = new function() {
         var drawing = new Image();
-        this.size = 60;
-        this.height = 10;
-        this.posX = 170;
+        this.size = Math.round(60*scope.scale);
+        this.height = Math.round(10*scope.scale);
+        this.posX = Math.round(170*scope.scale);
         this.posY = scope.worldHeight - this.height;
 
         /**
@@ -106,7 +109,8 @@ function World (canvas, level) {
          */
         this.render = function() {
             drawing.src = "images/player.png";
-            scope.canvas.drawImage(drawing, this.posX, this.posY);
+            //scope.canvas.drawImage(drawing, this.posX, this.posY);
+            scope.canvas.drawImage(drawing, 0, 0, drawing.width, drawing.height, this.posX, this.posY, this.size, this.height);
         };
     };
 
@@ -115,11 +119,11 @@ function World (canvas, level) {
      */
     this.ball = new function() {
         var drawing = new Image();
-        this.size = 20;
+        this.size = Math.round(20*scope.scale);
         this.radius = this.size/2;
         this.posX = scope.player.posX + scope.player.size/2;
         this.posY = scope.player.posY - this.size;
-        this.speedX = 0; //-2
+        this.speedX = -2; //-2
         this.speedY = -4; //-2
 
         /**
@@ -144,7 +148,8 @@ function World (canvas, level) {
          */
         this.render = function() {
             drawing.src = "images/ball.png";
-            scope.canvas.drawImage(drawing, this.posX, this.posY);
+            //scope.canvas.drawImage(drawing, this.posX, this.posY);
+            scope.canvas.drawImage(drawing, 0, 0, drawing.width, drawing.height, this.posX, this.posY, this.size, this.size);
         };
 
         /**
@@ -198,6 +203,8 @@ function World (canvas, level) {
         scope.canvas.fillStyle = "#fff";
         scope.canvas.fillRect(0, 0, scope.worldWidth, scope.worldHeight);
         scope.canvas.fillStyle = "#000";
+        /*scope.canvas.rect(0, 0, scope.worldWidth, scope.worldHeight);
+        scope.canvas.stroke();*/
     };
 
     /**
@@ -207,7 +214,7 @@ function World (canvas, level) {
     this.renderGameOver = function() {
         scope.clearView();
         scope.canvas.font="40px Arial";
-        scope.canvas.fillText("Game over!", scope.worldWidth/2 - 100, scope.worldHeight/2 + 10);
+        scope.canvas.fillText("Game over!", scope.worldWidth/2 - Math.round(100*scope.scale), scope.worldHeight/2 + Math.round(10*scope.scale));
     };
 
     /**
@@ -217,7 +224,7 @@ function World (canvas, level) {
     this.renderWinner = function() {
         scope.clearView();
         scope.canvas.font="40px Arial";
-        scope.canvas.fillText("You Won!", scope.worldWidth/2 - 80, scope.worldHeight/2 + 10);
+        scope.canvas.fillText("You Won!", scope.worldWidth/2 - Math.round(80*scope.scale), scope.worldHeight/2 + Math.round(10*scope.scale));
     };
 
     /**
@@ -227,7 +234,17 @@ function World (canvas, level) {
     this.renderPause = function() {
         scope.clearView();
         scope.canvas.font="40px Arial";
-        scope.canvas.fillText("Pause", scope.worldWidth/2 - 60, scope.worldHeight/2 + 10);
+        scope.canvas.fillText("Pause", scope.worldWidth/2 - Math.round(60*scope.scale), scope.worldHeight/2 + Math.round(10*scope.scale));
+    };
+
+    /**
+     * Render Level Number to canvas method
+     * @return void
+     */
+    this.renderLevelNum = function() {
+        scope.clearView();
+        scope.canvas.font="40px Arial";
+        scope.canvas.fillText("Level " + scope.level, scope.worldWidth/2 - Math.round(60*scope.scale), scope.worldHeight/2 + Math.round(10*scope.scale));
     };
 
     /**
@@ -292,6 +309,7 @@ function World (canvas, level) {
                     clearTimeout(timer);
                     console.log("You Won!!!");
                     scope.renderWinner();
+                    scope.nextLevel();
                 } else {
                     scope.timer();
                 }
@@ -341,26 +359,40 @@ function World (canvas, level) {
         scope.gameOver = false;
         scope.pause = false;
         scope.holdBall = true;
-        scope.ball.speedX = 0; //-2
+        scope.ball.speedX = -2; //-2
         scope.ball.speedY = -4;
+    };
+
+    this.nextLevel = function() {
+        var len = levels.length;
+        if (scope.level < len) {
+            setTimeout(function () {
+                scope.cubesCollection = [];
+                console.log(scope.cubesCollection);
+                scope.level++;
+                scope.init();
+            }, 3000);
+        }
     };
 
     this.loadLevel = function() {
         var i, 
             level = scope.level - 1, 
             len = levels[level].length, 
+            cubeWidth = Math.round(40*scope.scale),
+            cubeHeight = Math.round(20*scope.scale),
             x = 0, 
-            y = 40;
+            y = cubeWidth
 
         for (i = 0; i < len; i++) {
             if(levels[level][i] > 0) {
-                scope.cubesCollection.push(new Cube(x, y, levels[level][i], scope.canvas));
+                scope.cubesCollection.push(new Cube(x, y, levels[level][i], scope.canvas, scope.scale));
             }
-            if (x + 40 >= scope.worldWidth) {
+            if (x + cubeWidth >= scope.worldWidth) {
                 x = 0;
-                y += 20;
+                y += cubeHeight;
             } else {
-                x += 40;
+                x += cubeWidth;
             }
         }
     };
@@ -372,8 +404,11 @@ function World (canvas, level) {
     this.init = function () {
         scope.loadLevel();
         scope.setDefaults();
-        scope.renderWorld();
-        scope.timer();
+        scope.renderLevelNum();
+        setTimeout(function () {
+            scope.renderWorld();
+            scope.timer();
+        }, 3000);
     };
 
     document.onkeydown = this.keyHandler;
@@ -382,14 +417,44 @@ function World (canvas, level) {
             scope.player.posX = e.pageX - scope.player.size/2;
         }
     }, false);
+    document.getElementById("myCanvas").addEventListener('touchmove', function (e) {
+        if((e.pageX > scope.player.size/2) && ((e.pageX < (scope.worldWidth - scope.player.size/2)))) {
+            scope.player.posX = e.pageX - scope.player.size/2;
+        }
+    }, false);
+    document.getElementById("myCanvas").addEventListener('click', function () {
+        scope.holdBall = false;
+    }, false);
 };
 
 window.onload = function () {
     "use strict";
-    var canvas = document.getElementById("myCanvas"),
+
+    var canvasSize = 0;
+    if (getDimension() < 400) {
+        canvasSize = getDimension();
+    } else {
+        canvasSize = 400;
+    }
+    
+    var canvas = document.getElementById("myCanvas"),    
         ctx = canvas.getContext("2d");
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
     ctx.fillStyle = "#000";
 
     var world = new World(ctx, 1);
     world.init();
 };
+
+function getDimension() {
+    var width = 0;
+    if( typeof( window.innerWidth ) == 'number' ) {
+        width = window.innerWidth;
+    } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+        width = document.documentElement.clientWidth;
+    } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+        width = document.body.clientWidth;
+    }
+    return width;
+}

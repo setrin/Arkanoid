@@ -6,18 +6,29 @@ html, body {
     color: #000;
 }
 
-.container {
-    width: auto;
-    margin: 0 auto;
-    padding: 30px 15px;
+.canCon {
+    position: relative;
 }
 
 canvas {
     border: 1px solid black;
     float: left;
+    margin: 0;
+    padding: 0;
 }
 
 .informations {
+    position: absolute;
+    top: 5px;
+    left: 10px;
+}
+
+.informations span {
+    margin-bottom: 0px;
+    font-size: 14px;
+}
+
+.instructions {
 	float: left;
 	margin-left: 20px;
 	margin-top: 20px;
